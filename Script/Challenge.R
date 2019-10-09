@@ -112,3 +112,162 @@ Question3_Result2 <- BOM_joined %>%
   arrange(Temperature_difference_average)
 
 Question3_Result2
+
+
+write_csv(BOM_joined, "Results/BOM_table_visualisation_practice.csv")
+
+BOM_joined
+
+
+#!!!
+#Introduction to Visualisation: Preparing plots for display - p. 7
+#Challenge - visualisation practice
+
+#Question 1
+#For the Perth station (ID 9225), produce three scatter plots showing the 
+#relationship between the maximum temperature and each other measurement recorded 
+#(minimum temperature, rainfall and solar exposure).
+#Make sure your measurement values are all converted to numeric types with 
+#as.numeric(). - in my BOM_joined tibble (that I used), the values were already values (=dbl)  
+#To work with just the Perth measurements, make sure to filter() your dataset.
+BOM_Perth <- BOM_joined %>%
+  filter(Station_number == 9225)
+
+BOM_Perth
+
+#The only aesthetics you will need to map for this question are x and y. 
+#Then, a geom_point() layer will produce a scatterplot of the two mapped values.
+
+#scatter plot 1
+ggplot(data = BOM_Perth,
+       mapping = aes(x = max,
+                     y = min)) +
+  geom_point()
+
+#scatter plot 2
+ggplot(data = BOM_Perth,
+       mapping = aes(x = max,
+                     y = Rainfall)) +
+  geom_point()
+
+#scatter plot 3
+ggplot(data = BOM_Perth,
+       mapping = aes(x = max,
+                     y = Solar_exposure)) +
+  geom_point()
+
+
+#Question 2
+#Display these four measurements for the Perth station in a single scatter plot by 
+#using additional aesthetic mappings.
+#The aesthetics that geom_point() can use are found in the help page (?geom_point) 
+#under the Aesthetics heading
+#One possible solution is to map the temperature data to the x/y aesthetics, 
+#the rainfall to the size aesthetic, and the solar exposure to the colour aesthetic.
+
+#Version 1:
+ggplot(data = BOM_Perth,
+       mapping = aes(x = max,
+                     y = min,
+                     size = Rainfall,
+                     colour = Solar_exposure)) +
+  geom_point()
+
+?geom_point
+
+#Version 2
+ggplot(data = BOM_Perth,
+       mapping = aes(x = max,
+                     y = min,
+                     size = Rainfall,
+                     alpha = Solar_exposure)) +
+  geom_point()
+
+
+#Question 3
+#Take the four plots you have produced in Q1 and Q2 and save them as a multi-panel figure.
+
+install.packages("cowplot")
+
+library(cowplot)
+
+#Saving each individual plot into a variable
+plot1 <- ggplot(data = BOM_Perth,
+                mapping = aes(x = max,
+                              y = min)) +
+  geom_point()
+
+plot2 <- ggplot(data = BOM_Perth,
+                mapping = aes(x = max,
+                              y = Rainfall)) +
+  geom_point()
+
+plot3 <- ggplot(data = BOM_Perth,
+               mapping = aes(x = max,
+                             y = Solar_exposure)) +
+  geom_point()
+
+plot4 <- ggplot(data = BOM_Perth,
+                mapping = aes(x = max,
+                              y = min,
+                              size = Rainfall,
+                              colour = Solar_exposure)) +
+  geom_point()  
+  
+#providing these variables  as arguments to plot_grid()
+
+Question_3_plot <- plot_grid(plot1, plot2, plot3, plot4)
+
+#playing around / what was explained further above in section
+plot_grid(plot1, plot2, plot3, plot4, rel_heights = c(1,4))
+
+plot_grid(plot1, plot2, plot3, plot4, labels = "AUTO")
+
+plot_grid(plot1, plot2, plot3, plot4, labels = "auto")
+
+#The ggsave() function has a width and height argument to control how large a figure 
+#to create. This may be useful if your initial attempt at saving a figure looks too 
+#squashed.
+
+ggsave("Figures/Question_3_plot.jpg", plot = Question_3_plot, width = 12, height = 10, units = "cm")
+
+
+#Question 4
+#Using the entire BOM dataset, calculate the average monthly rainfall for each station. 
+#Produce a lineplot to visualise this data and the state each station is in.
+
+#data frame I will use from Challenge above (from 2 weeks ago)
+#BOM_joined <- full_join(BOM_data_clean, BOM_stations_tidy_2_mutated) 
+BOM_joined
+
+#For the data manipulation, you will need to use group_by() with multiple variables, 
+#and then summarise() to get the averaged rainfall measurements. 
+#Then join in a data frame containing the metadata about each station to be able to 
+#know which state each station is in.
+
+Question_4_tibble <- BOM_joined %>%
+  group_by(Station_number, Month, state) %>%
+  drop_na() %>%
+  summarise(average_rainfall = mean(Rainfall)) %>%
+  ungroup() %>%
+  mutate(Station_number = factor(Station_number)) %>%
+  mutate(Month = factor(Month))
+
+Question_4_tibble
+
+#If your lines in the plot are looking a bit odd, you may need to use the group 
+#aesthetic to make sure there is one line per station
+#There are many ways you could use to integrate the state information – the colour 
+#and linetype aesthetics, or with by using faceting. 
+
+ggplot(data = Question_4_tibble,
+       mapping = aes(x = Month,
+                     y = average_rainfall,
+                     colour = Station_number,
+                     group = Station_number)) +
+  facet_wrap(~state) +
+  geom_line()
+
+
+
+
